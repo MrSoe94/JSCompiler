@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS Playground Sederhana</title>
+    <!-- Memuat Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Konfigurasi Tailwind untuk menggunakan font Inter -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#10b981', // emerald-500
+                        secondary: '#facc15', // amber-400
+                        background: '#f9fafb', // gray-50
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Gaya kustom untuk memastikan area teks mengisi ruang dengan baik */
+        .editor-container {
+            display: grid;
+            grid-template-rows: 1fr; /* Memastikan textarea mengambil sisa ruang */
+            height: calc(100vh - 8rem); /* Sesuaikan tinggi agar muat di viewport */
+        }
+        /* Menggunakan font monospace untuk kode */
+        textarea, #output {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.875rem; /* text-sm */
+        }
+    </style>
+</head>
+<body class="bg-background font-sans p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-6">
+            <h1 class="text-3xl font-extrabold text-gray-900 border-b-4 border-primary pb-2 inline-block">
+                JavaScript Live Editor
+            </h1>
+            <p class="text-gray-600 mt-1">Tulis, jalankan, dan lihat hasilnya secara langsung.</p>
+        </header>
+
+        <div class="editor-container grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+            <!-- Area Input Kode JavaScript -->
+            <div class="flex flex-col bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="bg-gray-100 p-3 border-b border-gray-200 flex justify-between items-center">
+                    <h2 class="font-semibold text-lg text-gray-700">Kode JavaScript</h2>
+                    <button id="runButton"
+                            class="px-4 py-2 bg-primary text-white font-bold rounded-lg shadow-md hover:bg-emerald-600 transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+                        <svg class="w-5 h-5 inline mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Jalankan Kode
+                    </button>
+                </div>
+                <textarea id="jsCode" class="flex-grow p-4 resize-none border-0 focus:ring-0 text-gray-800"
+                          placeholder="Tulis kode JavaScript Anda di sini. Contoh: console.log('Halo Dunia!');"
+                          rows="15">
+// Contoh Kode JavaScript
+function hitungFaktorial(n) {
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    return n * hitungFaktorial(n - 1);
+}
+
+const angka = 5;
+console.log(`Faktorial dari ${angka} adalah: ${hitungFaktorial(angka)}`);
+</textarea>
+            </div>
+
+            <!-- Area Output dan Console -->
+            <div class="flex flex-col bg-white shadow-lg rounded-lg overflow-hidden">
+                <div class="bg-gray-100 p-3 border-b border-gray-200">
+                    <h2 class="font-semibold text-lg text-gray-700">Output Konsol</h2>
+                </div>
+                <!-- Area untuk menampilkan output console.log dan error -->
+                <div id="output" class="flex-grow p-4 bg-gray-900 text-white overflow-auto whitespace-pre-wrap">
+                    Tekan "Jalankan Kode" untuk melihat hasilnya.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const jsCodeArea = document.getElementById('jsCode');
+        const outputDiv = document.getElementById('output');
+        const runButton = document.getElementById('runButton');
+
+        // Menyimpan fungsi console.log asli
+        const originalConsoleLog = console.log;
+
+        // Fungsi untuk menangani dan menampilkan output
+        function logOutput(...args) {
+            // Konversi semua argumen menjadi string yang bisa dibaca
+            const message = args.map(arg => {
+                if (typeof arg === 'object' && arg !== null) {
+                    try {
+                        // Mencoba JSON.stringify dengan indentasi untuk objek
+                        return JSON.stringify(arg, null, 2);
+                    } catch (e) {
+                        // Fallback jika stringify gagal (misalnya, objek dengan referensi melingkar)
+                        return String(arg);
+                    }
+                }
+                return String(arg);
+            }).join(' ');
+
+            const logEntry = document.createElement('div');
+            logEntry.textContent = message;
+            logEntry.className = 'text-green-400 mb-1 border-l-2 border-green-500 pl-2';
+            outputDiv.appendChild(logEntry);
+
+            // Scroll ke bawah secara otomatis
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+
+            // Panggil console.log asli untuk logging di browser console juga
+            originalConsoleLog(...args);
+        }
+
+        // Fungsi untuk menampilkan pesan error
+        function displayError(e) {
+            const errorEntry = document.createElement('div');
+            errorEntry.innerHTML = `
+                <strong class="text-red-500">ERROR:</strong> ${e.message}<br>
+                <span class="text-gray-400 text-xs">${e.stack ? e.stack.split('\n')[1].trim() : ''}</span>
+            `;
+            errorEntry.className = 'text-red-400 mb-1 border-l-2 border-red-500 pl-2';
+            outputDiv.appendChild(errorEntry);
+            outputDiv.scrollTop = outputDiv.scrollHeight;
+        }
+
+        // Fungsi utama untuk menjalankan kode
+        function runCode() {
+            // Hapus output sebelumnya
+            outputDiv.innerHTML = '';
+
+            const code = jsCodeArea.value;
+
+            // Ganti fungsi console.log bawaan dengan fungsi custom
+            console.log = logOutput;
+
+            try {
+                // Jalankan kode menggunakan Function constructor untuk eksekusi yang aman
+                // Catatan: 'eval' dan Function constructor memiliki risiko keamanan,
+                // tetapi ini adalah cara paling mudah untuk interpreter JS di browser.
+                new Function(code)();
+            } catch (e) {
+                // Tangani error yang terjadi selama eksekusi
+                displayError(e);
+            } finally {
+                // Kembalikan console.log ke fungsi asli setelah eksekusi
+                console.log = originalConsoleLog;
+            }
+        }
+
+        // Event listener untuk tombol "Jalankan Kode"
+        runButton.addEventListener('click', runCode);
+
+        // Opsional: Jalankan kode saat halaman dimuat (untuk kode contoh)
+        // runCode(); 
+
+        // Untuk memastikan tata letak berfungsi dengan baik pada perubahan ukuran
+        window.addEventListener('resize', () => {
+             outputDiv.scrollTop = outputDiv.scrollHeight;
+        });
+
+        // Tampilkan pesan awal yang lebih bersih
+        outputDiv.innerHTML = '<div class="text-gray-500">Tekan "Jalankan Kode" untuk melihat hasilnya.</div>';
+    </script>
+</body>
+</html>
