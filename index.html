@@ -166,7 +166,7 @@ if (rataRata > 85) {
             const errorEntry = document.createElement('div');
             errorEntry.innerHTML = `
                 <strong class="text-red-500">RUNTIME ERROR:</strong> ${e.message}<br>
-                <span class="text-gray-400 text-xs">Line: ${e.stack ? e.stack.split('<anonymous>')[1].split(':')[1] : 'Unknown'}</span>
+                <span class="text-gray-400 text-xs">Baris: ${e.stack ? e.stack.split('<anonymous>')[1].split(':')[1] : 'Tidak Diketahui'}</span>
             `;
             errorEntry.className = 'text-red-400 mb-1 border-l-2 border-red-500 pl-2 text-sm';
             outputDiv.appendChild(errorEntry);
@@ -178,7 +178,7 @@ if (rataRata > 85) {
             // Hapus output sebelumnya
             outputDiv.innerHTML = '';
             // Tampilkan pesan loading
-            outputDiv.innerHTML = '<div class="text-primary animate-pulse">Running code...</div>';
+            outputDiv.innerHTML = '<div class="text-primary animate-pulse">Sedang menjalankan kode...</div>';
 
             const code = jsCodeArea.value;
 
@@ -188,19 +188,40 @@ if (rataRata > 85) {
             // Timeout singkat untuk membiarkan UI refresh pesan loading
             setTimeout(() => {
                 outputDiv.innerHTML = ''; // Hapus pesan loading
+                let errorOccurred = false;
 
                 try {
                     // Jalankan kode menggunakan Function constructor
                     new Function(code)();
                 } catch (e) {
+                    errorOccurred = true;
                     // Tangani error yang terjadi selama eksekusi
                     displayError(e);
                 } finally {
                     // Kembalikan console.log ke fungsi asli setelah eksekusi
                     console.log = originalConsoleLog;
-                    if (outputDiv.children.length === 0) {
-                        outputDiv.innerHTML = '<div class="text-gray-500">Kode berhasil dieksekusi, tetapi tidak ada output konsol yang ditemukan.</div>';
+
+                    // Cek apakah ada output (log atau error)
+                    const hasContent = outputDiv.children.length > 0;
+
+                    if (!errorOccurred) {
+                        // Jika tidak ada error, tambahkan pesan sukses/tanpa output
+                        if (hasContent) {
+                            const successMessage = document.createElement('div');
+                            successMessage.textContent = 'Script berhasil dieksekusi tanpa error.';
+                            successMessage.className = 'text-green-500 mt-2 pt-2 border-t border-gray-700 font-bold text-xs uppercase tracking-wider';
+                            outputDiv.appendChild(successMessage);
+                        } else {
+                            // Jika sukses tapi tidak ada log, ganti pesan kosong
+                            outputDiv.innerHTML = '<div class="text-green-500">Kode berhasil dieksekusi tanpa error, tetapi tidak ada output konsol yang ditemukan.</div>';
+                        }
+                    } else if (!hasContent) {
+                        // Fallback jika error terjadi tapi entah bagaimana tidak ada pesan error yang muncul
+                        outputDiv.innerHTML = '<div class="text-red-500">Terjadi kesalahan eksekusi.</div>';
                     }
+
+                    // Pastikan scroll ke bawah
+                    outputDiv.scrollTop = outputDiv.scrollHeight;
                 }
             }, 50); // Delay 50ms
         }
