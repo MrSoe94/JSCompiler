@@ -86,6 +86,9 @@ const data = [
     { nama: 'Dedi', skor: 72 }
 ];
 
+// Baris 11: Baris ini disengaja salah, hapus komen '//' di depan untuk mencoba error
+// console.log(rataRata); // Ini akan menyebabkan ReferenceError jika dieksekusi sebelum definisi
+
 const rataRata = data.reduce((sum, item) => sum + item.skor, 0) / data.length;
 
 console.log('Data Peserta:', data);
@@ -161,12 +164,33 @@ if (rataRata > 85) {
             originalConsoleLog(...args);
         }
 
-        // Fungsi untuk menampilkan pesan error
+        /**
+         * Fungsi untuk menampilkan pesan error dan mencoba mengekstrak nomor baris.
+         * Stack trace dari new Function() di browser biasanya terlihat seperti:
+         * "at <anonymous>:10:5" atau "at eval (<anonymous>:10:5)"
+         * Kita fokus pada angka kedua (nomor baris).
+         */
         function displayError(e) {
+            let lineNumber = 'Tidak Diketahui';
+
+            if (e.stack) {
+                // Mencari pola ':baris:kolom)' atau ':baris:kolom' di dalam stack trace
+                const match = e.stack.match(/<anonymous>:(\d+)/);
+                
+                if (match && match[1]) {
+                    // Nomor baris di new Function() dimulai dari 1.
+                    // match[1] memberikan nomor baris di dalam string kode.
+                    lineNumber = parseInt(match[1], 10);
+                }
+            }
+
             const errorEntry = document.createElement('div');
+            // Tampilkan nomor baris dengan penekanan
             errorEntry.innerHTML = `
                 <strong class="text-red-500">RUNTIME ERROR:</strong> ${e.message}<br>
-                <span class="text-gray-400 text-xs">Baris: ${e.stack ? e.stack.split('<anonymous>')[1].split(':')[1] : 'Tidak Diketahui'}</span>
+                <span class="text-gray-400 text-xs font-bold">Terjadi di Baris: 
+                    <span class="text-red-300">${lineNumber}</span>
+                </span>
             `;
             errorEntry.className = 'text-red-400 mb-1 border-l-2 border-red-500 pl-2 text-sm';
             outputDiv.appendChild(errorEntry);
